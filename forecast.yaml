@@ -1,0 +1,590 @@
+openapi: 3.0.3
+info:
+  title: Forecast Management API
+  description: API для управления прогнозами и работы с файлами
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: http://localhost:8080/api
+    description: Development server
+
+paths:
+  /forecast/user/{userID}:
+    get:
+      summary: Получить список прогнозов пользователя
+      description: Возвращает список всех прогнозов для указанного пользователя
+      tags:
+        - Forecast
+      parameters:
+        - name: userID
+          in: path
+          required: true
+          description: ID пользователя
+          schema:
+            type: integer
+            example: 123
+      responses:
+        '200':
+          description: Успешный запрос
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ForecastDTO'
+        '404':
+          description: Прогнозы не найдены
+        '500':
+          description: Внутренняя ошибка сервера
+
+  /forecast/{forecastID}:
+    get:
+      summary: Получить конкретный прогноз
+      description: Возвращает информацию о конкретном прогнозе по его ID
+      tags:
+        - Forecast
+      parameters:
+        - name: forecastID
+          in: path
+          required: true
+          description: ID прогноза
+          schema:
+            type: integer
+            example: 456
+      responses:
+        '200':
+          description: Успешный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailForecast'
+        '404':
+          description: Прогноз не найден
+        '500':
+          description: Внутренняя ошибка сервера
+
+  /forecast/create:
+    post:
+      summary: Создать новый прогноз
+      description: Загружает CSV файл и создает новый прогноз на его основе
+      tags:
+        - Forecast
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: CSV файл с данными для прогнозирования
+      responses:
+        '200':
+          description: Прогноз успешно создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailForecast'
+        '400':
+          description: Неверный формат файла или файл пуст
+        '500':
+          description: Ошибка при создании прогноза
+
+  /forecast/download/{fileName}:
+    get:
+      summary: Скачать файл
+      description: Скачивает файл по его имени
+      tags:
+        - Files
+      parameters:
+        - name: fileName
+          in: path
+          required: true
+          description: Имя файла для скачивания
+          schema:
+            type: string
+            example: "forecast_result_data_123.csv"
+      responses:
+        '200':
+          description: Файл успешно скачан
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Файл не найден
+        '500':
+          description: Ошибка при скачивании файла
+
+  /report/history/{userID}:
+    get:
+      tags:
+        - Reports
+      summary: Получить историю отчетов пользователя
+      description: Возвращает список всех отчетов, созданных конкретным пользователем
+      operationId: getListReport
+      parameters:
+        - name: userID
+          in: path
+          required: true
+          description: ID пользователя
+          schema:
+            type: string
+            example: "45"
+      responses:
+        '200':
+          description: Успешное получение списка отчетов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Report'
+        '404':
+          description: Отчеты не найдены
+        '500':
+          description: Внутренняя ошибка сервера
+
+  /report/create/{userId}/{forecastId}:
+      post:
+        tags:
+          - Reports
+        summary: Создать отчет
+        description: Создает новый отчет на основе прогноза и возвращает данные отчета
+        operationId: createReport
+        parameters:
+          - name: userId
+            in: path
+            required: true
+            description: ID пользователя
+            schema:
+              type: string
+              example: "45"
+          - name: forecastId
+            in: path
+            required: true
+            description: ID прогноза
+            schema:
+              type: string
+              example: "123"
+        responses:
+          '200':
+            description: Отчет успешно создан
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ReportData'
+          '400':
+            description: Неверные параметры запроса
+          '500':
+            description: Ошибка при создании отчета
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+
+  /report/preview/{forecastId}:
+    post:
+      tags:
+        - Reports
+      summary: Предпросмотр отчета
+      description: Для открытия отчета по конкретному прогнозу
+      operationId: previewReport
+      parameters:
+        - name: forecastId
+          in: path
+          required: true
+          description: ID прогноза
+          schema:
+            type: string
+            example: "123"
+      responses:
+        '200':
+          description: Успешное получение данных отчета
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportData'
+        '400':
+          description: Неверный ID прогноза
+        '404':
+          description: Прогноз не найден
+        '500':
+          description: Ошибка генерации отчета
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /report/download/{forecastId}:
+    get:
+      tags:
+        - Reports
+      summary: Скачать отчет в формате Word
+      description: Генерирует и скачивает полный отчет в формате Microsoft Word (.docx)
+      operationId: downloadReport
+      parameters:
+        - name: forecastId
+          in: path
+          required: true
+          description: ID прогноза
+          schema:
+            type: string
+            example: "123"
+      responses:
+        '200':
+          description: Успешное скачивание Word документа
+          content:
+            application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+              description: Имя файла для скачивания
+            Content-Length:
+              schema:
+                type: integer
+              description: Размер файла в байтах
+        '404':
+          description: Прогноз не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Ошибка генерации отчета
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /report/chart/forecast/{forecastId}:
+    post:
+      tags:
+        - Charts
+      summary: Получить график прогноза
+      description: Возвращает график прогноза продаж на 30 дней в формате PNG
+      operationId: getForecastChart
+      parameters:
+        - name: forecastId
+          in: path
+          required: true
+          description: ID прогноза
+          schema:
+            type: string
+            example: "123"
+      responses:
+        '200':
+          description: Успешное получение графика
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Неверный ID прогноза
+        '404':
+          description: Прогноз не найден
+        '500':
+          description: Ошибка генерации графика
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /report/chart/distribution/{forecastId}:
+    post:
+      tags:
+        - Charts
+      summary: Получить график распределения
+      description: Возвращает график распределения продаж по дням недели в формате PNG
+      operationId: getDistributionChart
+      parameters:
+        - name: forecastId
+          in: path
+          required: true
+          description: ID прогноза
+          schema:
+            type: string
+            example: "123"
+      responses:
+        '200':
+          description: Успешное получение графика
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Неверный ID прогноза
+        '404':
+          description: Прогноз не найден
+        '500':
+          description: Ошибка генерации графика
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /report/chart/heatmap/{forecastId}:
+    post:
+      tags:
+        - Charts
+      summary: Получить тепловую карту
+      description: Возвращает тепловую карту продаж по дням недели в формате PNG
+      operationId: getHeatMapChart
+      parameters:
+        - name: forecastId
+          in: path
+          required: true
+          description: ID прогноза
+          schema:
+            type: string
+            example: "123"
+      responses:
+        '200':
+          description: Успешное получение графика
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Неверный ID прогноза
+        '404':
+          description: Прогноз не найден
+        '500':
+          description: Ошибка генерации графика
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+
+components:
+  schemas:
+    ForecastDTO:
+      type: object
+      properties:
+        id_f:
+          type: integer
+          description: ID прогноза
+          example: 456
+        date:
+          type: string
+          description: Дата создания прогноза
+          example: "2024-01-15T10:30:00"
+        name:
+          type: string
+          description: Название прогноза
+          example: "Прогноз от 2024-01-15"
+      required:
+        - id_f
+        - date
+        - name
+
+    Forecast:
+      type: object
+      properties:
+        id_f:
+          type: integer
+          description: ID прогноза
+          example: 456
+        date:
+          type: string
+          description: Дата создания прогноза
+          example: "2024-01-15T10:30:00"
+        name:
+          type: string
+          description: Название прогноза
+          example: "Прогноз от 2024-01-15"
+        inputfilename:
+          type: string
+          description: Имя входного файла
+          example: "123456789_input_data.csv"
+        outputfilename:
+          type: string
+          description: Имя файла с результатами
+          example: "123456789_forecast_result.csv"
+      required:
+        - id_f
+        - date
+        - name
+        - inputfilename
+        - outputfilename
+
+    Report:
+      type: object
+      properties:
+        id_r:
+          type: integer
+          description: ID отчета
+          example: 1
+        userId:
+          type: integer
+          description: ID пользователя
+          example: 45
+        forecastId:
+          type: integer
+          description: ID прогноза
+          example: 123
+        name:
+          type: string
+          description: Название отчета
+          example: "Отчет по Прогноз на февраль 2024"
+      required:
+        - id_r
+        - userId
+        - forecastId
+        - name
+
+    DetailForecast:
+      type: object
+      properties:
+        f:
+          $ref: '#/components/schemas/Forecast'
+        resultFile:
+          type: string
+          format: byte
+          description: Бинарные данные файла с результатами (base64 encoded)
+          example: "RGF0ZTtQcm9kdWN0O0RheSBvZiB3ZWVrO1NhbGVzX2ZvcmVjYXN0X2tnO3RlbXA7d2VhdGhlcjt3aW5kX3NwZWVkO3dpbmRfZGlyZWN0aW9uO3ByZWNpcGl0YXRpb247aHVtaWRpdHkNCjIwMjMtMDItMDE7Mjk7V2VkbmVzZGF5OzYzLDQ2Oy0wLDk7U25vdzsyMSw5OzE4ODswLDY7NTANCjIwMjMtMDItMDI7Mjk7VGh1cnNkYXk7NjQsMDI7LTIsNTtTbm93OzIyLDg7MTU3OzAsMTs1MA0KMjAyMy0wMi0wMzsyOTtGcmlkYXk7NjEsOTI7LTEsMjtTbm93OzIwLDU7MTc2OzEsOTs1MA0KMjAyMy0wMi0wNDsyOTtTYXR1cmRheTs1OCwwODstMSw5O1Nub3c7MTEsNDs2NzswLDM7NTANCjIwMjMtMDItMDU7Mjk7U3VuZGF5OzU1LDY1Oy0zLDU7U25vdzsxNSw5OzM0MjsxLDk7NTANCjIwMjMtMDItMDY7Mjk7TW9uZGF5OzU3LDU5Oy02LDQ7U25vdzsxNSw3OzMyNTswLDA7NTANCjIwMjMtMDItMDc7Mjk7VHVlc2RheTs2MSw4MjstMTAsMDtPdmVyY2FzdDsxMiwxOzIyMjswLDA7NTANCjIwMjMtMDItMDg7Mjk7V2VkbmVzZGF5OzYzLDg2Oy04LDI7U25vdzsxOCwxOzI2MTswLDE7NTANCjIwMjMtMDItMDk7Mjk7VGh1cnNkYXk7NjQsNDE7LTIsNTtTbm93OzE2LDY7MjQ1OzAsMzs1MA0KMjAyMy0wMi0xMDsyOTtGcmlkYXk7NjIsMTk7LTMsNjtTbm93OzMyLDQ7MjE4OzAsMjs1MA0KMjAyMy0wMi0xMTsyOTtTYXR1cmRheTsyMiw4MzstMyw2O1Nub3c7MzQsOTsyMjI7Myw5OzUwDQoyMDIzLTAyLTEyOzI5O1N1bmRheTs1NSw2NTstNCw3O1Nub3c7MzksNjszMzE7Miw3OzUwDQoyMDIzLTAyLTEzOzI5O01vbmRheTsyMiw3NDstNCw2O1Nub3c7MjIsOTsyNjA7MywxOzUwDQoyMDIzLTAyLTE0OzI5O1R1ZXNkYXk7NjIsMjM7LTAsNDtTbm93OzMxLDc7MzQzOzEsMjs1MA0KMjAyMy0wMi0xNTsyOTtXZWRuZXNkYXk7NjQsMjg7LTMsNTtPdmVyY2FzdDszMSw4OzM1NDswLDA7NTANCjIwMjMtMDItMTY7Mjk7VGh1cnNkYXk7NjQsNzg7LTYsMDtPdmVyY2FzdDsxNCw4OzE5OzAsMDs1MA0KMjAyMy0wMi0xNzsyOTtGcmlkYXk7NjIsNDg7LTksMDtPdmVyY2FzdDsxNSwwOzEyNzswLDA7NTANCjIwMjMtMDItMTg7Mjk7U2F0dXJkYXk7NTgsMjY7LTcsODtTbm93OzM0LDk7MTQxOzAsMTs1MA0KMjAyMy0wMi0xOTsyOTtTdW5kYXk7MjEsODk7LTcsNDtTbm93OzI4LDc7MTI1OzQsMDs1MA0KMjAyMy0wMi0yMDsyOTtNb25kYXk7NTcsOTk7LTgsMDtTbm93OzE0LDI7NjE7MSwwOzUwDQoyMDIzLTAyLTIxOzI5O1R1ZXNkYXk7NDQsNTU7LTE0LDA7T3ZlcmNhc3Q7MTgsODszMDswLDA7NTANCjIwMjMtMDItMjI7Mjk7V2VkbmVzZGF5OzQ2LDA0Oy0xNSw3O092ZXJjYXN0OzI1LDA7MzMyOzAsMDs1MA0KMjAyMy0wMi0yMzsyOTtUaHVyc2RheTs0NiwzOTstMTIsOTtPdmVyY2FzdDsyNCwyOzMwNTswLDA7NTANCjIwMjMtMDItMjQ7Mjk7RnJpZGF5OzYyLDU5Oy03LDI7U25vdzsyNSwwOzIyNDsyLDI7NTANCjIwMjMtMDItMjU7Mjk7U2F0dXJkYXk7NTgsMjQ7LTAsNTtTbm93OzI4LDI7MTgwOzEsMDs1MA0KMjAyMy0wMi0yNjsyOTtTdW5kYXk7NzksNjswLDA7U25vdzszNywzOzIwNDszLDM7NTANCjIwMjMtMDItMjc7Mjk7TW9uZGF5OzU4LDI0Oy00LDc7U25vdzszMyw2OzI4MDswLDM7NTANCjIwMjMtMDItMjg7Mjk7VHVlc2RheTs2Miw2NjstNSw5O1Nub3c7MzYsMjsyNjk7MCw3OzUwDQoyMDIzLTAzLTAxOzI5O1dlZG5lc2RheTs2NCw4NjstNSw4O092ZXJjYXN0OzI5LDE7Mjk4OzAsMDs1MA0KMjAyMy0wMy0wMjsyOTtUaHVyc2RheTs2NSw0MjstNCw5O1Nub3c7MjcsNjsyODE7MCwzOzUwDQo="
+      required:
+        - f
+        - resultFile
+
+    ReportData:
+      type: object
+      properties:
+        forecast:
+          $ref: '#/components/schemas/Forecast'
+        totalPredictedKg:
+          type: number
+          format: double
+          description: Общий прогнозируемый объем в кг
+          example: 1903.8
+        averageDailyKg:
+          type: number
+          format: double
+          description: Среднедневной объем в кг
+          example: 63.46
+        maxDailyKg:
+          type: number
+          format: double
+          description: Максимальный дневной объем в кг
+          example: 64.02
+        maxKgDate:
+          type: string
+          description: Дата максимального объема
+          example: "02.02.2023"
+        minDailyKg:
+          type: number
+          format: double
+          description: Минимальный дневной объем в кг
+          example: 55.65
+        minKgDate:
+          type: string
+          description: Дата минимального объема
+          example: "05.02.2023"
+        dailyForecasts:
+          type: array
+          description: Детальный прогноз по дням
+          items:
+            $ref: '#/components/schemas/ForecastResults'
+        salesDistribution:
+          type: array
+          description: Распределение продаж по дням недели
+          items:
+            $ref: '#/components/schemas/DistributionItem'
+        weeklyPattern:
+          type: object
+          additionalProperties:
+            type: number
+            format: double
+          description: Паттерн продаж по дням недели
+          example:
+            Понедельник: 65.25
+            Вторник: 63.42
+            Среда: 64.89
+        standardDeviation:
+          type: number
+          format: double
+          description: Стандартное отклонение
+          example: 3.15
+        coefficientOfVariation:
+          type: number
+          format: double
+          description: Коэффициент вариации (%)
+          example: 4.96
+        eportGeneratedAt:
+          type: string
+          format: date-time
+          description: Дата и время генерации отчета
+          example: "2024-01-16T14:30:25"
+    
+    DistributionItem:
+      type: object
+      properties:
+        dayName:
+          type: string
+          description: Название дня недели
+          example: "Понедельник"
+        averageSales:
+          type: number
+          format: double
+          description: Средние продажи в этот день
+          example: 65.25
+        percentage:
+          type: number
+          format: double
+          description: Доля от общего объема (%)
+          example: 15.3
+        totalSales:
+          type: number
+          format: double
+          description: Общий объем продаж в этот день
+          example: 195.75
+    
+    ForecastResults:
+        type: object
+        properties:
+          date:
+            type: string
+            description: дата
+            example: 1
+          predictedKg:
+            type: number
+            format: double
+            description: предсказанные килограммы
+            example: 45
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Время возникновения ошибки
+        status:
+          type: integer
+          description: HTTP статус код
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        path:
+          type: string
+          description: URL запроса
+      example:
+        timestamp: "2024-01-15T10:30:00.000Z"
+        status: 500
+        error: "Internal Server Error"
