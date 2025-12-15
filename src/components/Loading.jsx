@@ -6,12 +6,10 @@ import ChartComponent from './ChartComponent'
 import ReportForecast from './ReportForecast';
 import { downloadForecastFile, uploadForecastFile } from '../api/api.js'; 
 
-function Loading() {
+function Loading({userId}) {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState(null); 
-
-  const userId=45;
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
@@ -31,7 +29,7 @@ function Loading() {
     setUploadResult(null); 
 
     try {
-      const result = await uploadForecastFile(file);   
+      const result = await uploadForecastFile(file, userId);   
       if (result.success) {
         console.log('Файл успешно загружен:', result.data);
         setUploadResult(result.data);

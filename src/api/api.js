@@ -12,9 +12,10 @@ const apiForecast = axios.create({
 });
 
 // Функция для загрузки файла
-export const uploadForecastFile = async (file) => {
+export const uploadForecastFile = async (file, userId) => {
   const formData = new FormData();
   formData.append('file', file);
+   formData.append('id_u', userId);
 
   try {
     const response = await apiForecast.post('/forecast/create', formData, {

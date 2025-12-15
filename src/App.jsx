@@ -26,7 +26,7 @@ function App() {
 
         {/* Роуты */}
         <Routes>
-          <Route path="/" element={<Loading />} />
+          <Route path="/" element={<Loading userId={(45)}/>} />
           <Route path="/forecasts" element={<ListForecast userId={(45)} />} />
           {/* <Route path="/login" element={<Login />} />
           <Route path="*" element={<NotFound />} /> */}
