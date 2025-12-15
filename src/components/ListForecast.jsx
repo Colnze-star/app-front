@@ -1,28 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {downloadReportFile, downloadForecastFile, fetchUserForecasts } from '../api/api.js'; 
-import { 
-  Table, 
-  Button, 
-  Divider, 
-  Typography, 
-  Space, 
-  message,
-  Spin,
-  Empty,
-  Modal,
-  Tag
-} from 'antd';
-import { 
-  DownloadOutlined, 
-  DeleteOutlined, 
-  FileTextOutlined,
-  ReloadOutlined,
-  EyeOutlined,
-  CalendarOutlined
-} from '@ant-design/icons';
+import { Table, Button, Divider, Typography, Space, message,Spin,Empty,Modal, Tag } from 'antd';
+import { DownloadOutlined, DeleteOutlined, FileTextOutlined,ReloadOutlined,EyeOutlined,CalendarOutlined} from '@ant-design/icons';
 
 const { Title } = Typography;
-
 
 const ListForecast = ({ userId }) => {
   const [forecasts, setForecasts] = useState([]);
@@ -149,12 +130,17 @@ const ListForecast = ({ userId }) => {
           >
             Скачать прогноз
           </Button>
-          <Button 
+         <Button 
             type="link"  
             icon={<DownloadOutlined />} 
-           
-            onClick={() => handleDownloadReport(record.id_f, record.name)}
-            title="Скачать отчет"
+            disabled={!record.reportname}
+            onClick={() => {
+              if (record.reportname) {
+                handleDownloadReport(record.f.id_f, record.f.name);
+              }
+            }}
+            title={record.reportname ? "Скачать отчет" : "Отчет не доступен"}
+            style={!record.reportname ? { color: '#ccc', cursor: 'not-allowed' } : {}}
           >
             Скачать отчет
           </Button>
