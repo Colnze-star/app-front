@@ -6,14 +6,13 @@ npm install antd
 npm install papaparse
 npm install recharts
 npm install react-router-dom
-3) запусти проект
-npm run dev
-4) не забудь поменять api на свои
+3) не забудь поменять api на свой в папке api - переменная API_BASE_URL
+4) запусти проект npm run dev
 
 
 
 
 
-
+это для меня
 -------
 prism mock forecast.yaml
