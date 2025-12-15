@@ -24,6 +24,7 @@ export const uploadForecastFile = async (file, userId) => {
       }
     });
 
+    
     console.log('Файл загружен:', response.data);
     return { success: true, data: response.data };
     

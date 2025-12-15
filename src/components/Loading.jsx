@@ -102,7 +102,7 @@ function Loading({userId}) {
         <Divider style={{ borderColor: '#213547' }} />
          <button className='button-dark-download' onClick={handleDownloadForecast}> Скачать файл прогноза </button>
             <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
-              Будет скачан файл: {uploadResult.f.outputfilename || 'forecast_result'}
+              Будет скачан файл: {uploadResult.f.name || 'forecast_result'}
             </p>
         </>
       ) : (

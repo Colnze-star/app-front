@@ -90,7 +90,7 @@ const ReportForecast = ({ userId, forecastId }) => {
                             Скачать файл прогноза
                         </button>
                         <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
-                            Будет скачан файл: {uploadResult.forecast.name || 'forecast_result'}
+                            Будет скачан файл: {`Отчет по ${uploadResult.forecast.name} `}
                         </p>
                     </div>
                 ) : (
