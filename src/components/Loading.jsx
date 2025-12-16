@@ -5,11 +5,15 @@ import CsvTable from './CsvTable'
 import ChartComponent from './ChartComponent'
 import ReportForecast from './ReportForecast';
 import { downloadForecastFile, uploadForecastFile } from '../api/api.js'; 
+import Navbar from './Navbar.jsx';
 
-function Loading({userId}) {
+function Loading() {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState(null); 
+
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const userId = user.data.id_u;
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
@@ -46,7 +50,7 @@ function Loading({userId}) {
   const handleDownloadForecast = async () => {
       if (!uploadResult) return;
       try {
-        const fileName = uploadResult.f.name;
+        const fileName = uploadResult.f.outputfilename;
         console.log(fileName);
         await downloadForecastFile(fileName);
       } catch (error) {
@@ -57,6 +61,7 @@ function Loading({userId}) {
 
   return (
     <>
+      {/* < Navbar/> */}
       <h1>Предиктивный анализ спроса</h1>
       <Divider style={{ borderColor: '#213547' }} />
       <div className="input-file">
@@ -102,7 +107,7 @@ function Loading({userId}) {
         <Divider style={{ borderColor: '#213547' }} />
          <button className='button-dark-download' onClick={handleDownloadForecast}> Скачать файл прогноза </button>
             <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
-              Будет скачан файл: {uploadResult.f.name || 'forecast_result'}
+              Будет скачан файл: {uploadResult.f.outputfilename || 'forecast_result'}
             </p>
         </>
       ) : (

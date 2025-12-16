@@ -80,3 +80,32 @@
    padding: 20px;
    
 }
+
+.input-login{
+ color: #213547;
+ font-size: 20px;
+ border: 2px solid #213547;
+
+}
+
+.input-login-button{
+ font-size: 20px;
+ border: 2px solid white;
+ padding: 20px;
+ color: white;
+ background-color: #213547;
+ margin: 0px;
+ height: 45px;
+ margin-bottom: 10px;
+
+}
+.input-login-button:hover{
+ font-size: 21px;
+ border: 2px solid #213547 !important;
+ padding: 21px;
+ color: #213547 !important;
+ background-color: white !important;
+}
+
+
+

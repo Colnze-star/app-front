@@ -15,7 +15,7 @@ const apiForecast = axios.create({
 export const uploadForecastFile = async (file, userId) => {
   const formData = new FormData();
   formData.append('file', file);
-   formData.append('id_u', userId);
+   formData.append('userId', userId);
 
   try {
     const response = await apiForecast.post('/forecast/create', formData, {
@@ -24,7 +24,6 @@ export const uploadForecastFile = async (file, userId) => {
       }
     });
 
-    
     console.log('Файл загружен:', response.data);
     return { success: true, data: response.data };
     
@@ -60,7 +59,7 @@ export const downloadForecastFile = async (fileName) => {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `${fileName}.csv`);
+      link.setAttribute('download', `${fileName}`);
       document.body.appendChild(link);
       link.click();
       
@@ -190,5 +189,64 @@ export const fetchUserForecasts = async (userId) => {
   }
 };
 
+
+export  const UserAuthentication = async (values) => {
+  console.log(values.email);
+  console.log(values.password);
+    try {
+      const response = await apiForecast.post('/auth', {     
+          login: values.email,
+          password: values.password,
+      });
+      console.log(response.data);
+      return{
+        success: true,
+        data: response.data
+      }
+    } catch (error) {
+      console.log(error);
+    } 
+  }
+
+  export  const UserRegister = async (values) => {
+
+    try {
+      const response = await apiForecast.post('/auth/register', {     
+          login: values.email,
+          password: values.password,
+          fio: values.fio,
+      });
+      console.log(response.data);
+      return{
+        success: true,
+        data: response.data,
+        message: response.data.message
+      }
+    } catch (error) {
+      console.log(error);
+    } 
+  }
+
+  export  const UserConfirm = async (values) => {
+    try {
+      const response = await apiForecast.post('/auth/confirm', {     
+          login: values[0].login,
+          password: values[0].password,
+          fio: values[0].fio,
+          code: values[0].code
+      });
+      console.log(response.data);
+      return{
+        success: true,
+        data: response.data,
+        message: response.data.message
+      }
+    } catch (error) {
+      console.log(error);
+    } 
+  }
+
+
+
 // Экспортируем все нужные API методы
-export default { downloadForecastFile, uploadForecastFile, CreateReport, downloadReportFile, fetchUserForecasts};
+export default { downloadForecastFile, uploadForecastFile, CreateReport, downloadReportFile, fetchUserForecasts, UserAuthentication, UserRegister, UserConfirm};

@@ -5,9 +5,12 @@ import { DownloadOutlined, DeleteOutlined, FileTextOutlined,ReloadOutlined,EyeOu
 
 const { Title } = Typography;
 
-const ListForecast = ({ userId }) => {
+const ListForecast = () => {
   const [forecasts, setForecasts] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const userId = user.data.id_u;
 
 
   const handleFetchForecasts = async () => {
@@ -42,6 +45,7 @@ const ListForecast = ({ userId }) => {
   // Скачивание прогноза
   const handleDownloadForecast = async (fileName) => {
       if (!fileName) return;
+    
       try {
         console.log(fileName);
         await downloadForecastFile(fileName);
@@ -56,7 +60,7 @@ const ListForecast = ({ userId }) => {
         alert('Нет данных для скачивания');
         return;
       }
-  
+
       const targetForecastId = forecastId;
       const reportName = `Отчет по ${fileName}`;
   
@@ -82,7 +86,7 @@ const ListForecast = ({ userId }) => {
   const columns = [
     {
       title: 'Название прогноза',
-      dataIndex: 'name',
+      dataIndex: ['f', 'name'],
       key: 'name',
       render: (text) => (
         <Space>
@@ -93,7 +97,7 @@ const ListForecast = ({ userId }) => {
     },
   {
     title: 'Дата создания',
-    dataIndex: 'date',
+    dataIndex: ['f', 'date'],
     key: 'date',
     width: 180,
     align: 'center',
@@ -125,7 +129,7 @@ const ListForecast = ({ userId }) => {
           <Button 
             type="link" 
             icon={<DownloadOutlined />} 
-            onClick={() => handleDownloadForecast(record.name)}
+            onClick={() => handleDownloadForecast(record.f.outputfilename)}
             title="Скачать прогноз"
           >
             Скачать прогноз
@@ -136,7 +140,7 @@ const ListForecast = ({ userId }) => {
             disabled={!record.reportname}
             onClick={() => {
               if (record.reportname) {
-                handleDownloadReport(record.f.id_f, record.f.name);
+                handleDownloadReport(record.f.id_f, record.f.outputfilename);
               }
             }}
             title={record.reportname ? "Скачать отчет" : "Отчет не доступен"}

@@ -4,39 +4,38 @@ import { Divider,Input } from 'antd';
 // import { useState } from 'react';
 import Loading from './components/Loading';
 import ListForecast from './components/ListForecast';
+import Authentication  from './components/Authentication';
+import Dashboard from './components/Dashboard';
 // import DownloadForecast from './components/ChartComponent';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
+import Navbar from './components/Navbar.jsx';
+import Register from './components/Register.jsx';
+import Confirm from  './components/Confirm.jsx';
+
+
 
 function App() {
-
-
+  const isLoggedIn = !!localStorage.getItem('user');
 
   return (
-    <>
+    <Router>
+      <Routes>
+        <Route path="/auth" element={<Authentication />} />
+        <Route path="/register" element={<Register />} />
+         <Route path="/confirm" element={<Confirm />} />
 
-     <Router>
-      <div>
-        {/* Навигационное меню */}
-        <nav className='nav' >
-          <Link to="/" style={{ marginRight: '10px' }}>Прогнозирование</Link>
-          <Link to="/forecasts" style={{ marginRight: '10px' }}>Мои прогнозы</Link>
-          {/* <Link to="/forecasts" style={{ marginRight: '10px' }}>Прогнозы</Link> */}
-          {/* <Link to="/login">Вход</Link> */}
-        </nav>
-
-        {/* Роуты */}
-        <Routes>
-          <Route path="/" element={<Loading userId={(45)}/>} />
-          <Route path="/forecasts" element={<ListForecast userId={(45)} />} />
-          {/* <Route path="/login" element={<Login />} />
-          <Route path="*" element={<NotFound />} /> */}
-        </Routes>
-      </div>
+        <Route path="*" element={
+          <>
+            <Navbar />
+            <Routes>
+              <Route path="/" element={isLoggedIn ? <Loading /> : <Navigate to="/auth" />} />
+              <Route path="/forecasts" element={isLoggedIn ? <ListForecast /> : <Navigate to="/auth" />} />
+            </Routes>
+          </>
+        } />
+      </Routes>
     </Router>
-
-
-    </>
-  )
+  );
 }
 
 export default App

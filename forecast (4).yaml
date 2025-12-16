@@ -34,7 +34,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ForecastDTO'
+                  $ref: '#/components/schemas/ForecastWithReportName'
         '404':
           description: Прогнозы не найдены
         '500':
@@ -368,10 +368,187 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /auth:
+    post:
+      tags:
+        - Authentication
+      summary: Авторизация пользователя
+      description: Проверяет логин (email) и пароль пользователя, возвращает информацию об авторизованном пользователе
+      operationId: authenticateUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCredentials'
+            example:
+              login: "user@example.com"
+              password: "securePassword123"
+      responses:
+        '200':
+          description: Успешная авторизация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+              example:
+                id_u: 123
+                login: "user@example.com"
+                fio: "Иван Иванов"
+        '401':
+          description: Неверные учетные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                timestamp: "2024-01-16T10:30:00.000Z"
+                status: 401
+                error: "Unauthorized"
+                message: "Неверный логин или пароль"
+                path: "/auth"
+        '500':
+          description: Внутренняя ошибка сервера
+  /auth/register:
+    post:
+      tags:
+        - Registration
+      summary: Начать регистрацию пользователя
+      description: |
+        Отправляет 6-значный код подтверждения на указанный email (login).
+        **Важно:** Регистрация не завершается на этом шаге — требуется подтверждение через /auth/confirm.
+        Пользователь создается в базе данных только после успешного подтверждения кода.
+      operationId: initiateRegistration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrationRequest'
+            example:
+              login: "newuser@example.com"
+              password: "newSecurePassword123"
+              fio: "Петр Петров"
+      responses:
+        '202':
+          description: Запрос на регистрацию принят, код отправлен на email
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Код подтверждения отправлен на email."
+        '400':
+          description: Неверные данные запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                timestamp: "2024-01-16T10:30:00.000Z"
+                status: 400
+                error: "Bad Request"
+                message: "Логин, пароль и email обязательны."
+                path: "/auth/register"
+        '409':
+          description: Конфликт (пользователь уже существует)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                timestamp: "2024-01-16T10:30:00.000Z"
+                status: 409
+                error: "Conflict"
+                message: "Пользователь с таким email уже существует"
+                path: "/auth/register"
+        '500':
+          description: Ошибка отправки email или внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                timestamp: "2024-01-16T10:30:00.000Z"
+                status: 500
+                error: "Internal Server Error"
+                message: "Ошибка при отправке email: Не удалось отправить письмо"
+                path: "/auth/register"
 
+  /auth/confirm:
+    post:
+      tags:
+        - Registration
+      summary: Подтвердить регистрацию по коду
+      description: |
+        Завершает регистрацию пользователя, проверяя 6-значный код, отправленный на email.
+        Если код верен и не истек, пользователь активируется и возвращаются его данные.
+      operationId: confirmRegistration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmationRequest'
+            example:
+              login: "newuser@example.com"
+              code: "123456"
+              password: "newSecurePassword123"
+              fio: "Петр Петров"
+      responses:
+        '201':
+          description: Регистрация успешно подтверждена, пользователь создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+              example:
+                id_u: 124
+                login: "newuser@example.com"
+                fio: "Петр Петров"
+        '400':
+          description: Неверный код, истек срок действия или неверные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                timestamp: "2024-01-16T10:30:00.000Z"
+                status: 400
+                error: "Bad Request"
+                message: "Неверный код подтверждения"
+                path: "/auth/confirm"
+        '404':
+          description: Пользователь или запрос на регистрацию не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                timestamp: "2024-01-16T10:30:00.000Z"
+                status: 404
+                error: "Not Found"
+                message: "Запрос на регистрацию не найден"
+                path: "/auth/confirm"
 
 components:
   schemas:
+    ForecastWithReportName:
+      type: object
+      properties:
+        f:
+          $ref: '#/components/schemas/Forecast'
+        reportname:
+          type: string
+          description: Название отчета
+          example: "Отчет по Прогноз от 2024-01-15"
+      required:
+        - id_f
+        - date
+        - name
+
     ForecastDTO:
       type: object
       properties:
@@ -565,6 +742,104 @@ components:
             format: double
             description: предсказанные килограммы
             example: 45
+    
+    UserCredentials:
+      type: object
+      required:
+        - login
+        - password
+      properties:
+        login:
+          type: string
+          format: email
+          description: Email пользователя (используется как логин)
+          example: "user@example.com"
+        password:
+          type: string
+          format: password
+          description: Пароль пользователя
+          example: "securePassword123"
+        fio:
+          type: string
+          description: ФИО пользователя (не требуется для аутентификации)
+          example: "Иван Иванов"
+
+    # Для начала регистрации (POST /auth/register)
+    RegistrationRequest:
+      type: object
+      required:
+        - login
+        - password
+        - fio
+      properties:
+        login:
+          type: string
+          format: email
+          description: Email для регистрации (будет использоваться как логин)
+          example: "newuser@example.com"
+          pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+        password:
+          type: string
+          format: password
+          description: Пароль (минимум 6 символов)
+          minLength: 6
+          example: "newSecurePassword123"
+        fio:
+          type: string
+          description: ФИО пользователя
+          example: "Петр Петров"
+          minLength: 2
+
+    # Для подтверждения регистрации (POST /auth/confirm)
+    ConfirmationRequest:
+      type: object
+      required:
+        - login
+        - code
+      properties:
+        login:
+          type: string
+          format: email
+          description: Email, на который был отправлен код
+          example: "newuser@example.com"
+        code:
+          type: string
+          description: 6-значный код подтверждения из email
+          pattern: "^[0-9]{6}$"
+          example: "123456"
+        password:
+          type: string
+          format: password
+          description: Пароль пользователя (необходим для завершения регистрации)
+          example: "newSecurePassword123"
+        fio:
+          type: string
+          description: ФИО пользователя (необходимо для завершения регистрации)
+          example: "Петр Петров"
+
+    # Ответ с данными пользователя
+    User:
+      type: object
+      properties:
+        id_u:
+          type: integer
+          description: ID пользователя в системе
+          example: 123
+        login:
+          type: string
+          format: email
+          description: Email (логин) пользователя
+          example: "user@example.com"
+        fio:
+          type: string
+          description: ФИО пользователя
+          example: "Иван Иванов"
+      required:
+        - id_u
+        - login
+        - fio
+
+    
     ErrorResponse:
       type: object
       properties:
@@ -588,3 +863,4 @@ components:
         timestamp: "2024-01-15T10:30:00.000Z"
         status: 500
         error: "Internal Server Error"
+        message: "Error processing"
